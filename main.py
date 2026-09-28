@@ -1,4 +1,4 @@
-﻿import re
+import re
 
 from config import CONFIG
 
@@ -81,7 +81,7 @@ def criar_contexto_resposta(historico):
     Mantém somente as mensagens mais recentes enviadas
     ao modelo.
 
-    O histórico completo continua salvo em historico.json.
+    O histórico completo continua salvo.
     """
 
     if not historico:
@@ -107,7 +107,7 @@ def main():
 
     historico = carregar_historico()
 
-    # Mantém o arquivo organizado, mas não destrói o histórico.
+    # Mantém o histórico organizado e controlado.
     historico = limitar_historico_turbo(historico)
 
     salvar_historico(historico)
