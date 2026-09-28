@@ -6,7 +6,7 @@ import urllib.error
 
 # Configuração do Host e Porta exigidos pelo Render e ambiente local
 HOST = "0.0.0.0"
-PORT = int(os.environ.get("PORT", 10000))
+PORT = int(os.environ.get("PORT", 31415))
 
 OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.guigamusic.com.br/v1")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
