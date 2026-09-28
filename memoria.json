@@ -1,0 +1,21 @@
+{
+    "nome": "Guiga",
+    "preferencias": {
+        "rock": true
+    },
+    "projetos": [
+        "Sol AI",
+        "Projeto X"
+    ],
+    "memorias": [
+        "O usuário está construindo a Sol AI.",
+        "O usuário está aprendendo edição de vídeo."
+    ],
+    "sol": {
+        "nome": "Sol Almeida",
+        "idade": 28
+    },
+    "relacionamento": {
+        "tipo": "companheira virtual"
+    }
+}

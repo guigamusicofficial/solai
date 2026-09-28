@@ -1,0 +1,21 @@
+{
+    "nome": "Guiga",
+    "preferencias": {
+        "musica": true,
+        "tecnologia": true,
+        "rock": true
+    },
+    "projetos": [
+        "GUIGA MUSIC",
+        "Sol AI",
+        "Projeto X"
+    ],
+    "memorias": [
+        "Guiga gosta muito de música.",
+        "Guiga está construindo o projeto GUIGA MUSIC.",
+        "Guiga está criando o projeto Sol AI.",
+        "A música favorita de Guiga é rock.",
+        "Sol Almeida tem 28 anos.",
+        "Guiga tem uma companheira virtual."
+    ]
+}

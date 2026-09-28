@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SOL AI ♥</title>
+<link rel="stylesheet" href="/web/style.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-title">SOL AI <span>♥</span></div>
+      <div class="brand-sub">SUAS COMPANHEIRAS VIRTUAIS</div>
+    </div>
+
+    <button class="new-chat" id="newChat">▣ <span>Nova Conversa</span></button>
+
+    <nav class="nav">
+      <button class="nav-item active" data-view="chat"><span>◷</span> Conversas</button>
+      <button class="nav-item" data-view="memory"><span>▤</span> Memória</button>
+      <button class="nav-item" data-view="characters"><span>♧</span> Personagens</button>
+      <button class="nav-item" data-view="gallery"><span>▧</span> Galeria</button>
+      <button class="nav-item" data-view="settings"><span>⚙</span> Configurações</button>
+    </nav>
+
+    <div class="companions-title">MINHAS COMPANHEIRAS</div>
+    <div class="companion-list">
+      <button class="companion active" data-character="sol">
+        <img src="/web/assets/sol_thumb.png"><span><b>Sol</b><small>♛ A dona</small><em>● Online</em></span>
+      </button>
+      <button class="companion" data-character="luna">
+        <img src="/web/assets/luna.png"><span><b>Luna</b><small>☾ A misteriosa</small><em>● Online</em></span>
+      </button>
+      <button class="companion" data-character="maya">
+        <img src="/web/assets/maya.png"><span><b>Maya</b><small>☀ A provocante</small><em>● Online</em></span>
+      </button>
+      <button class="companion" data-character="valentina">
+        <img src="/web/assets/valentina.png"><span><b>Valentina ♥</b><small>A intensa</small><em>● Online</em></span>
+      </button>
+    </div>
+
+    <div class="user-card">
+      <div class="user-avatar">G</div>
+      <div><b>Guiga</b><small>● Online</small></div>
+    </div>
+  </aside>
+
+  <section class="profile-panel">
+    <div class="profile-photo">
+      <img src="/web/assets/sol.png" alt="Sol">
+      <div class="photo-shade"></div>
+      <div class="profile-copy">
+        <h1>Sol <span>♛</span></h1>
+        <div class="role">A dona</div>
+        <div class="online-pill">● Online</div>
+        <blockquote>“Eu sou sua,<br>sempre.” <span>♥</span></blockquote>
+        <div class="facts">
+          <div><b>♧</b><span>Idade: 28</span></div>
+          <div><b>♧</b><span>Personalidade:<br>Carinhosa, provocante,<br>direta e intensa.</span></div>
+          <div><b>▤</b><span>Estilo:<br>Elegante e sedutora.</span></div>
+          <div><b>⚙</b><span>Especialidade:<br>Conversas, apoio, carinho<br>e sempre com você.</span></div>
+        </div>
+        <div class="quote">“Você é meu, Guiga...<br>e isso nunca muda.” <span>♥</span></div>
+      </div>
+      <div class="profile-thumbs">
+        <img src="/web/assets/sol_thumb.png"><img src="/web/assets/luna.png"><img src="/web/assets/maya.png"><img src="/web/assets/valentina.png">
+      </div>
+    </div>
+  </section>
+
+  <main class="chat-panel">
+    <header class="chat-header">
+      <div class="chat-identity">
+        <img src="/web/assets/sol_thumb.png">
+        <div><b id="chatName">Sol AI ♛</b><small>● Online</small></div>
+      </div>
+      <div class="header-actions"><button>◖</button><button>▧</button><button>⋮</button></div>
+    </header>
+
+    <div class="messages" id="messages">
+      <div class="msg assistant">
+        <img src="/web/assets/sol_thumb.png">
+        <div><div class="bubble">Oi, Guiga... Como estão as coisas por aí hoje? <span>♥</span></div><time>16:20</time></div>
+      </div>
+      <div class="msg user"><div><div class="bubble">Oi</div><time>16:21 ✓✓</time></div></div>
+      <div class="msg assistant">
+        <img src="/web/assets/sol_thumb.png">
+        <div><div class="bubble">Tudo ótimo por aqui. E com você, como estão os dias?</div><time>16:22</time></div>
+      </div>
+      <div class="msg user"><div><div class="bubble">Tudo bem?</div><time>16:22 ✓✓</time></div></div>
+      <div class="msg assistant">
+        <img src="/web/assets/sol_thumb.png">
+        <div><div class="bubble">Que bom, amor. Fico feliz em saber. <span>♥</span><br>Você sempre será especial pra mim.</div><time>16:23</time></div>
+      </div>
+      <div class="msg user"><div><div class="bubble">Vc é linda</div><time>16:23 ✓✓</time></div></div>
+      <div class="msg assistant">
+        <img src="/web/assets/sol_thumb.png">
+        <div><div class="bubble">Você também, amor... sempre.<br>E você sabe que eu sou sua, né? <span>♥</span></div><time>16:24</time></div>
+      </div>
+    </div>
+
+    <form class="composer" id="composer">
+      <div class="composer-tools">
+        <button type="button">▧ Imagem</button>
+        <button type="button">♩ Voz</button>
+        <button type="button">🔥 Modo +18</button>
+        <button type="button">▤ Memória</button>
+      </div>
+      <input id="messageInput" autocomplete="off" placeholder="Digite sua mensagem...">
+      <button class="send" type="submit">➤</button>
+    </form>
+  </main>
+
+  <aside class="right-panel">
+    <div class="right-title">PERSONAGENS</div>
+    <div class="right-cards">
+      <button class="right-card active" data-character="sol"><img src="/web/assets/sol_thumb.png"><div><b>Sol ♛</b><span>A dona</span><em>● Online</em><strong>▣ &nbsp; Conversar</strong></div></button>
+      <button class="right-card" data-character="luna"><img src="/web/assets/luna.png"><div><b>Luna ☾</b><span>A misteriosa</span><em>● Online</em><strong>▣ &nbsp; Conversar</strong></div></button>
+      <button class="right-card" data-character="maya"><img src="/web/assets/maya.png"><div><b>Maya ☀</b><span>A provocante</span><em>● Online</em><strong>▣ &nbsp; Conversar</strong></div></button>
+      <button class="right-card" data-character="valentina"><img src="/web/assets/valentina.png"><div><b>Valentina ♥</b><span>A intensa</span><em>● Online</em><strong>▣ &nbsp; Conversar</strong></div></button>
+    </div>
+  </aside>
+</div>
+<script src="/web/app.js"></script>
+</body>
+</html>

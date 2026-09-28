@@ -1,0 +1,251 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sol AI</title>
+    <link rel="stylesheet" href="/web/style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-orb"></div>
+            <div>
+                <strong>SOL AI</strong>
+                <span>Virtual Companion</span>
+            </div>
+        </div>
+
+        <div class="profile-mini">
+            <div class="avatar-mini">G</div>
+            <div>
+                <strong>Guiga</strong>
+                <span>Online</span>
+            </div>
+        </div>
+
+        <nav class="menu">
+
+            <button class="menu-item active">
+                <span>◈</span>
+                <span>Conversas</span>
+            </button>
+
+            <button class="menu-item">
+                <span>♡</span>
+                <span>Memórias</span>
+            </button>
+
+            <button class="menu-item">
+                <span>▣</span>
+                <span>Galeria</span>
+            </button>
+
+            <button class="menu-item">
+                <span>◌</span>
+                <span>Personagens</span>
+            </button>
+
+            <button class="menu-item">
+                <span>⚙</span>
+                <span>Configurações</span>
+            </button>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="system-status">
+                <span class="status-dot"></span>
+                <div>
+                    <strong>Sistema online</strong>
+                    <small>Gemini ativo</small>
+                </div>
+            </div>
+        </div>
+
+    </aside>
+
+
+    <!-- CHAT PRINCIPAL -->
+    <main class="chat-area">
+
+        <header class="chat-header">
+
+            <div class="sol-title">
+
+                <div class="sol-avatar">
+                    <div class="avatar-placeholder">S</div>
+                    <span class="online-ring"></span>
+                </div>
+
+                <div>
+                    <h1>Sol Almeida</h1>
+                    <p>Companheira virtual · Online</p>
+                </div>
+
+            </div>
+
+            <div class="header-actions">
+                <button title="Pesquisar">⌕</button>
+                <button title="Mais opções">⋮</button>
+            </div>
+
+        </header>
+
+
+        <!-- MENSAGENS -->
+        <section id="chat" class="messages">
+
+            <div class="welcome">
+
+                <div class="welcome-glow"></div>
+
+                <div class="welcome-avatar">
+                    S
+                </div>
+
+                <h2>Olá, Guiga.</h2>
+
+                <p>
+                    Eu sou a Sol.
+                    <br>
+                    Estou aqui.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- DIGITAÇÃO -->
+        <footer class="composer">
+
+            <div class="composer-box">
+
+                <button class="attach-btn" title="Anexar">
+                    ＋
+                </button>
+
+                <textarea
+                    id="message"
+                    placeholder="Escreva uma mensagem para a Sol..."
+                    rows="1"
+                ></textarea>
+
+                <button
+                    id="send"
+                    class="send-btn"
+                    title="Enviar"
+                >
+                    ➤
+                </button>
+
+            </div>
+
+            <div class="composer-info">
+                <span>Sol AI</span>
+                <span>Gemini · Memória ativa</span>
+            </div>
+
+        </footer>
+
+    </main>
+
+
+    <!-- PERSONAGENS -->
+    <aside class="characters">
+
+        <div class="characters-header">
+            <div>
+                <span>COMPANHEIRAS</span>
+                <h2>Personagens</h2>
+            </div>
+
+            <button>＋</button>
+        </div>
+
+
+        <!-- SOL -->
+        <div class="character-card selected">
+
+            <div class="character-image sol-character">
+                S
+            </div>
+
+            <div class="character-info">
+                <strong>Sol</strong>
+                <span>Principal</span>
+            </div>
+
+            <span class="character-online"></span>
+
+        </div>
+
+
+        <!-- LUNA -->
+        <div class="character-card">
+
+            <div class="character-image luna-character">
+                L
+            </div>
+
+            <div class="character-info">
+                <strong>Luna</strong>
+                <span>Misteriosa</span>
+            </div>
+
+        </div>
+
+
+        <!-- MAYA -->
+        <div class="character-card">
+
+            <div class="character-image maya-character">
+                M
+            </div>
+
+            <div class="character-info">
+                <strong>Maya</strong>
+                <span>Provocante</span>
+            </div>
+
+        </div>
+
+
+        <!-- VALENTINA -->
+        <div class="character-card">
+
+            <div class="character-image valentina-character">
+                V
+            </div>
+
+            <div class="character-info">
+                <strong>Valentina</strong>
+                <span>Intensa</span>
+            </div>
+
+        </div>
+
+
+        <div class="character-note">
+            <span>✦</span>
+            <p>
+                Cada personagem possui
+                sua própria personalidade.
+            </p>
+        </div>
+
+    </aside>
+
+</div>
+
+<script src="/web/app.js"></script>
+
+</body>
+</html>
