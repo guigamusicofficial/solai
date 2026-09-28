@@ -1,59 +1,75 @@
 import os
 import psycopg2
-from urllib.parse import urlparse
+from psycopg2.extras import RealDictCursor
+
+# ============================================================
+# CONFIGURAÇÃO DA CONEXÃO COM O SUPABASE (POSTGRESQL)
+# ============================================================
+
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 
 def obter_conexao():
-    database_url = os.environ.get("DATABASE_URL")
-    
-    if not database_url:
-        # Fallback local caso queira testar na sua máquina com Postgres local
-        database_url = "postgresql://postgres:postgres@localhost:5432/solai"
+    """Abre e retorna uma conexão com o banco de dados PostgreSQL do Supabase."""
+    try:
+        conexao = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        return conexao
+    except Exception as erro:
+        print(f"[Erro de Conexão com o Banco]: {erro}")
+        return None
 
-    url = urlparse(database_url)
-    
-    conn = psycopg2.connect(
-        database=url.path[1:],
-        user=url.username,
-        password=url.password,
-        host=url.hostname,
-        port=url.port
-    )
-    return conn
+# ============================================================
+# OPERAÇÕES DE BANCO DE DADOS
+# ============================================================
 
-def inicializar_banco():
-    conn = obter_conexao()
-    cursor = conn.cursor()
-    
-    # Tabela de Memória do Usuário
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS memoria_usuario (
-            id SERIAL PRIMARY KEY,
-            nome TEXT,
-            preferencias JSONB,
-            projetos JSONB,
-            memorias JSONB,
-            sol_nome TEXT,
-            sol_idade INT,
-            relacionamento_tipo TEXT
-        );
-    """)
-    
-    # Tabela de Histórico de Conversas
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS historico_chat (
-            id SERIAL PRIMARY KEY,
-            role TEXT,
-            content TEXT,
-            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """)
-    
-    conn.commit()
-    cursor.close()
-    conn.close()
+def salvar_mensagem(role, content):
+    """Insere uma mensagem do chat no histórico do banco de dados."""
+    conexao = obter_conexao()
+    if not conexao:
+        return
+    try:
+        with conexao.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO historico_chat (role, content) VALUES (%s, %s);",
+                (role, content)
+            )
+            conexao.commit()
+    except Exception as erro:
+        print(f"[Erro ao salvar mensagem]: {erro}")
+    finally:
+        conexao.close()
 
-# Inicializa as tabelas automaticamente ao importar
-try:
-    inicializar_banco()
-except Exception as e:
-    print(f"Aviso ao inicializar tabelas do banco: {e}")
+def carregar_historico(limite=20):
+    """Carrega as últimas mensagens do histórico de conversas ordenadas por data."""
+    conexao = obter_conexao()
+    if not conexao:
+        return []
+    try:
+        with conexao.cursor() as cursor:
+            cursor.execute(
+                "SELECT role, content FROM historico_chat ORDER BY criado_em DESC LIMIT %s;",
+                (limite,)
+            )
+            resultados = cursor.fetchall()
+            # Retorna em ordem cronológica correta (inverte a lista)
+            return [{"role": r["role"], "content": r["content"]} for r in reversed(resultados)]
+    except Exception as erro:
+        print(f"[Erro ao carregar histórico]: {erro}")
+        return []
+    finally:
+        conexao.close()
+
+def carregar_memoria_usuario():
+    """Carrega o perfil, preferências e memórias guardadas."""
+    conexao = obter_conexao()
+    if not conexao:
+        return {}
+    try:
+        with conexao.cursor() as cursor:
+            cursor.execute("SELECT * FROM memoria_usuario ORDER BY id DESC LIMIT 1;")
+            resultado = cursor.fetchone()
+            return dict(resultado) if resultado else {}
+    except Exception as erro:
+        print(f"[Erro ao carregar memória]: {erro}")
+        return {}
+    finally:
+        conexao.close()
