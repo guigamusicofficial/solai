@@ -1,17 +1,10 @@
-﻿import json
-import os
+import json
 import re
-
-from config import LIMITE_HISTORICO, MODELO_SOL
-from core import client
-
-
-ARQUIVO_MEMORIA = "memoria.json"
-ARQUIVO_HISTORICO = "historico.json"
-
+from config import LIMITE_HISTORICO
+from database import obter_conexao
 
 # ============================================================
-# MEMÓRIA
+# MEMÓRIA (POSTGRESQL)
 # ============================================================
 
 def memoria_padrao():
@@ -25,46 +18,81 @@ def memoria_padrao():
             "idade": 28
         },
         "relacionamento": {
-            "tipo": "companheira virtual"
+            "tipo": "namorada virtual do Guiga"
         }
     }
 
 
 def carregar_memoria():
-    if not os.path.exists(ARQUIVO_MEMORIA):
-        memoria = memoria_padrao()
-        salvar_memoria(memoria)
-        return memoria
-
     try:
-        with open(
-            ARQUIVO_MEMORIA,
-            "r",
-            encoding="utf-8"
-        ) as arquivo:
-            memoria = json.load(arquivo)
-
-        if not isinstance(memoria, dict):
-            return memoria_padrao()
-
+        conn = obter_conexao()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT nome, preferencias, projetos, memorias, sol_nome, sol_idade, relacionamento_tipo FROM memoria_usuario ORDER BY id DESC LIMIT 1;")
+        row = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        if not row:
+            memoria = memoria_padrao()
+            salvar_memoria(memoria)
+            return memoria
+            
+        memoria = {
+            "nome": row[0] or "",
+            "preferencias": row[1] if isinstance(row[1], dict) else json.loads(row[1] or "{}"),
+            "projetos": row[2] if isinstance(row[2], list) else json.loads(row[2] or "[]"),
+            "memorias": row[3] if isinstance(row[3], list) else json.loads(row[3] or "[]"),
+            "sol": {
+                "nome": row[4] or "Sol Almeida",
+                "idade": row[5] or 28
+            },
+            "relacionamento": {
+                "tipo": row[6] or "namorada virtual do Guiga"
+            }
+        }
         return memoria
-
-    except Exception:
+    except Exception as e:
+        print(f"Erro ao carregar memória do banco: {e}")
         return memoria_padrao()
 
 
 def salvar_memoria(memoria):
-    with open(
-        ARQUIVO_MEMORIA,
-        "w",
-        encoding="utf-8"
-    ) as arquivo:
-        json.dump(
-            memoria,
-            arquivo,
-            ensure_ascii=False,
-            indent=4
-        )
+    try:
+        conn = obter_conexao()
+        cursor = conn.cursor()
+        
+        # Garante que existe pelo menos uma linha na tabela
+        cursor.execute("SELECT COUNT(*) FROM memoria_usuario;")
+        count = cursor.fetchone()[0]
+        
+        nome = memoria.get("nome", "")
+        prefs = json.dumps(memoria.get("preferencias", {}), ensure_ascii=False)
+        projs = json.dumps(memoria.get("projetos", []), ensure_ascii=False)
+        mems = json.dumps(memoria.get("memorias", []), ensure_ascii=False)
+        sol_nome = memoria.get("sol", {}).get("nome", "Sol Almeida")
+        sol_idade = memoria.get("sol", {}).get("idade", 28)
+        rel_tipo = memoria.get("relacionamento", {}).get("tipo", "namorada virtual do Guiga")
+        
+        if count == 0:
+            cursor.execute("""
+                INSERT INTO memoria_usuario (nome, preferencias, projetos, memorias, sol_nome, sol_idade, relacionamento_tipo)
+                VALUES (%s, %s::jsonb, %s::jsonb, %s::jsonb, %s, %s, %s);
+            """, (nome, prefs, projs, mems, sol_nome, sol_idade, rel_tipo))
+        else:
+            cursor.execute("""
+                UPDATE memoria_usuario 
+                SET nome = %s, preferencias = %s::jsonb, projetos = %s::jsonb, memorias = %s::jsonb, 
+                    sol_nome = %s, sol_idade = %s, relacionamento_tipo = %s
+                WHERE id = (SELECT id FROM memoria_usuario ORDER BY id DESC LIMIT 1);
+            """, (nome, prefs, projs, mems, sol_nome, sol_idade, rel_tipo))
+            
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        print(f"Erro ao salvar memória no banco: {e}")
 
 
 # ============================================================
@@ -90,9 +118,7 @@ def corrigir_texto_mojibake(texto):
             ).decode(
                 "utf-8"
             )
-
             return corrigido
-
         except Exception:
             return texto
 
@@ -100,39 +126,22 @@ def corrigir_texto_mojibake(texto):
 
 
 def corrigir_memoria_mojibake(memoria):
-
     if not isinstance(memoria, dict):
         return memoria
 
-    for chave in (
-        "nome",
-    ):
-        if isinstance(memoria.get(chave), str):
-            memoria[chave] = corrigir_texto_mojibake(
-                memoria[chave]
-            )
+    if isinstance(memoria.get("nome"), str):
+        memoria["nome"] = corrigir_texto_mojibake(memoria["nome"])
 
-    for chave in (
-        "projetos",
-        "memorias"
-    ):
+    for chave in ("projetos", "memorias"):
         valores = memoria.get(chave, [])
-
         if isinstance(valores, list):
             memoria[chave] = [
-                corrigir_texto_mojibake(valor)
-                if isinstance(valor, str)
-                else valor
+                corrigir_texto_mojibake(valor) if isinstance(valor, str) else valor
                 for valor in valores
             ]
 
-    preferencias = memoria.get(
-        "preferencias",
-        {}
-    )
-
+    preferencias = memoria.get("preferencias", {})
     if isinstance(preferencias, dict):
-
         memoria["preferencias"] = {
             corrigir_texto_mojibake(str(chave)): valor
             for chave, valor in preferencias.items()
@@ -148,44 +157,27 @@ def corrigir_memoria_mojibake(memoria):
 def normalizar_texto(texto):
     if not isinstance(texto, str):
         return ""
-
     texto = corrigir_texto_mojibake(texto)
-
-    texto = re.sub(
-        r"\s+",
-        " ",
-        texto
-    ).strip()
-
+    texto = re.sub(r"\s+", " ", texto).strip()
     return texto
 
 
 def remover_duplicatas_lista(lista):
-
     if not isinstance(lista, list):
         return []
-
     resultado = []
     vistos = set()
-
     for item in lista:
-
         if not isinstance(item, str):
             continue
-
         item = normalizar_texto(item)
-
         if not item:
             continue
-
         chave = item.casefold()
-
         if chave in vistos:
             continue
-
         vistos.add(chave)
         resultado.append(item)
-
     return resultado
 
 
@@ -194,102 +186,35 @@ def remover_duplicatas_lista(lista):
 # ============================================================
 
 def organizar_memoria(memoria):
-
     if not isinstance(memoria, dict):
         memoria = memoria_padrao()
 
     base = memoria_padrao()
 
-    # --------------------------------------------------------
-    # CAMPOS PRINCIPAIS
-    # --------------------------------------------------------
-
-    nome = memoria.get(
-        "nome",
-        ""
-    )
-
+    nome = memoria.get("nome", "")
     if isinstance(nome, str):
         base["nome"] = normalizar_texto(nome)
 
-    # --------------------------------------------------------
-    # PREFERÊNCIAS
-    # --------------------------------------------------------
-
-    preferencias = memoria.get(
-        "preferencias",
-        {}
-    )
-
+    preferencias = memoria.get("preferencias", {})
     if isinstance(preferencias, dict):
-
         novas_preferencias = {}
-
         for chave, valor in preferencias.items():
-
-            chave = normalizar_texto(
-                str(chave)
-            )
-
+            chave = normalizar_texto(str(chave))
             if chave:
                 novas_preferencias[chave] = valor
-
         base["preferencias"] = novas_preferencias
 
-    # --------------------------------------------------------
-    # PROJETOS
-    # --------------------------------------------------------
+    base["projetos"] = remover_duplicatas_lista(memoria.get("projetos", []))
+    base["memorias"] = remover_duplicatas_lista(memoria.get("memorias", []))
 
-    base["projetos"] = remover_duplicatas_lista(
-        memoria.get(
-            "projetos",
-            []
-        )
-    )
-
-    # --------------------------------------------------------
-    # MEMÓRIAS
-    # --------------------------------------------------------
-
-    base["memorias"] = remover_duplicatas_lista(
-        memoria.get(
-            "memorias",
-            []
-        )
-    )
-
-    # --------------------------------------------------------
-    # CONFIGURAÇÃO DA SOL
-    # --------------------------------------------------------
-
-    sol = memoria.get(
-        "sol",
-        {}
-    )
-
+    sol = memoria.get("sol", {})
     if isinstance(sol, dict):
+        base["sol"]["nome"] = sol.get("nome", "Sol Almeida")
+        base["sol"]["idade"] = sol.get("idade", 28)
 
-        base["sol"]["nome"] = sol.get(
-            "nome",
-            "Sol Almeida"
-        )
-
-        base["sol"]["idade"] = sol.get(
-            "idade",
-            28
-        )
-
-    relacionamento = memoria.get(
-        "relacionamento",
-        {}
-    )
-
+    relacionamento = memoria.get("relacionamento", {})
     if isinstance(relacionamento, dict):
-
-        base["relacionamento"]["tipo"] = relacionamento.get(
-            "tipo",
-            "companheira virtual"
-        )
+        base["relacionamento"]["tipo"] = relacionamento.get("tipo", "namorada virtual do Guiga")
 
     return base
 
@@ -299,49 +224,27 @@ def organizar_memoria(memoria):
 # ============================================================
 
 def atualizar_memoria(mensagem, memoria):
-
     if not isinstance(mensagem, str):
         return memoria
 
     mensagem = mensagem.strip()
-
     if not mensagem:
         return memoria
 
     memoria = organizar_memoria(memoria)
-
-    # --------------------------------------------------------
-    # NOME
-    # --------------------------------------------------------
 
     padroes_nome = [
         r"^\s*meu nome é\s+(.+?)[.!?]?\s*$",
         r"^\s*pode me chamar de\s+(.+?)[.!?]?\s*$",
         r"^\s*quero que me chame de\s+(.+?)[.!?]?\s*$"
     ]
-
     for padrao in padroes_nome:
-
-        resultado = re.search(
-            padrao,
-            mensagem,
-            re.IGNORECASE
-        )
-
+        resultado = re.search(padrao, mensagem, re.IGNORECASE)
         if resultado:
-
-            nome = normalizar_texto(
-                resultado.group(1)
-            )
-
+            nome = normalizar_texto(resultado.group(1))
             if nome:
                 memoria["nome"] = nome
-
             return memoria
-
-    # --------------------------------------------------------
-    # GOSTOS
-    # --------------------------------------------------------
 
     padroes_gosto = [
         r"^\s*eu gosto de\s+(.+?)[.!?]?\s*$",
@@ -350,131 +253,40 @@ def atualizar_memoria(mensagem, memoria):
         r"^\s*curto muito\s+(.+?)[.!?]?\s*$",
         r"^\s*adoro\s+(.+?)[.!?]?\s*$"
     ]
-
     for padrao in padroes_gosto:
-
-        resultado = re.search(
-            padrao,
-            mensagem,
-            re.IGNORECASE
-        )
-
+        resultado = re.search(padrao, mensagem, re.IGNORECASE)
         if resultado:
-
-            gosto = normalizar_texto(
-                resultado.group(1)
-            )
-
+            gosto = normalizar_texto(resultado.group(1))
             if gosto:
-
                 chave = gosto.casefold()
-
                 memoria["preferencias"][chave] = True
-
             return memoria
-
-    # --------------------------------------------------------
-    # NÃO GOSTO
-    # --------------------------------------------------------
 
     padroes_nao_gosto = [
         r"^\s*não gosto de\s+(.+?)[.!?]?\s*$",
         r"^\s*odeio\s+(.+?)[.!?]?\s*$"
     ]
-
     for padrao in padroes_nao_gosto:
-
-        resultado = re.search(
-            padrao,
-            mensagem,
-            re.IGNORECASE
-        )
-
+        resultado = re.search(padrao, mensagem, re.IGNORECASE)
         if resultado:
-
-            item = normalizar_texto(
-                resultado.group(1)
-            )
-
+            item = normalizar_texto(resultado.group(1))
             if item:
-
                 chave = item.casefold()
-
                 memoria["preferencias"][chave] = False
-
             return memoria
-
-    # --------------------------------------------------------
-    # PROJETOS
-    # --------------------------------------------------------
 
     padroes_projeto = [
         r"^\s*meu projeto é\s+(.+?)[.!?]?\s*$",
         r"^\s*meu projeto\s+(.+?)[.!?]?\s*$",
         r"^\s*estou construindo\s+(.+?)[.!?]?\s*$"
     ]
-
     for padrao in padroes_projeto:
-
-        resultado = re.search(
-            padrao,
-            mensagem,
-            re.IGNORECASE
-        )
-
+        resultado = re.search(padrao, mensagem, re.IGNORECASE)
         if resultado:
-
-            projeto = normalizar_texto(
-                resultado.group(1)
-            )
-
+            projeto = normalizar_texto(resultado.group(1))
             if projeto:
-
-                memoria["projetos"].append(
-                    projeto
-                )
-
-                memoria["projetos"] = remover_duplicatas_lista(
-                    memoria["projetos"]
-                )
-
-            return memoria
-
-    # --------------------------------------------------------
-    # OUTRAS MEMÓRIAS
-    # --------------------------------------------------------
-
-    padroes_memoria = [
-        r"^\s*estou aprendendo\s+(.+?)[.!?]?\s*$",
-        r"^\s*estou estudando\s+(.+?)[.!?]?\s*$",
-        r"^\s*estou trabalhando\s+(.+?)[.!?]?\s*$",
-        r"^\s*estou fazendo\s+(.+?)[.!?]?\s*$"
-    ]
-
-    for padrao in padroes_memoria:
-
-        resultado = re.search(
-            padrao,
-            mensagem,
-            re.IGNORECASE
-        )
-
-        if resultado:
-
-            assunto = normalizar_texto(
-                resultado.group(1)
-            )
-
-            if assunto:
-
-                memoria["memorias"].append(
-                    f"O usuário está {padrao.split('estou ')[1].split(r'\\s')[0] if False else 'envolvido com'} {assunto}."
-                )
-
-                memoria["memorias"] = remover_duplicatas_lista(
-                    memoria["memorias"]
-                )
-
+                memoria["projetos"].append(projeto)
+                memoria["projetos"] = remover_duplicatas_lista(memoria["projetos"])
             return memoria
 
     return memoria
@@ -485,80 +297,30 @@ def atualizar_memoria(mensagem, memoria):
 # ============================================================
 
 def criar_contexto_memoria(memoria):
-
-    memoria = organizar_memoria(
-        memoria
-    )
-
+    memoria = organizar_memoria(memoria)
     linhas = []
 
-    nome = memoria.get(
-        "nome",
-        ""
-    ).strip()
-
+    nome = memoria.get("nome", "").strip()
     if nome:
-        linhas.append(
-            f"Nome: {nome}"
-        )
+        linhas.append(f"Nome: {nome}")
 
-    preferencias = memoria.get(
-        "preferencias",
-        {}
-    )
-
+    preferencias = memoria.get("preferencias", {})
     if preferencias:
-
-        positivas = [
-            chave
-            for chave, valor in preferencias.items()
-            if valor is True
-        ]
-
-        negativas = [
-            chave
-            for chave, valor in preferencias.items()
-            if valor is False
-        ]
-
+        positivas = [chave for chave, valor in preferencias.items() if valor is True]
+        negativas = [chave for chave, valor in preferencias.items() if valor is False]
         if positivas:
-            linhas.append(
-                "Preferências: "
-                + ", ".join(positivas)
-            )
-
+            linhas.append("Preferências: " + ", ".join(positivas))
         if negativas:
-            linhas.append(
-                "Não gosta de: "
-                + ", ".join(negativas)
-            )
+            linhas.append("Não gosta de: " + ", ".join(negativas))
 
-    projetos = memoria.get(
-        "projetos",
-        []
-    )
-
+    projetos = memoria.get("projetos", [])
     if projetos:
-        linhas.append(
-            "Projetos: "
-            + ", ".join(projetos)
-        )
+        linhas.append("Projetos: " + ", ".join(projetos))
 
-    memorias = memoria.get(
-        "memorias",
-        []
-    )
-
+    memorias = memoria.get("memorias", [])
     if memorias:
-
-        linhas.append(
-            "Memórias:"
-        )
-
-        linhas.extend(
-            f"- {memoria_item}"
-            for memoria_item in memorias
-        )
+        linhas.append("Memórias:")
+        linhas.extend(f"- {item}" for item in memorias)
 
     if not linhas:
         return "Nenhuma memória permanente registrada."
@@ -567,67 +329,50 @@ def criar_contexto_memoria(memoria):
 
 
 # ============================================================
-# HISTÓRICO
+# HISTÓRICO (POSTGRESQL)
 # ============================================================
 
 def carregar_historico():
-
-    if not os.path.exists(
-        ARQUIVO_HISTORICO
-    ):
-        return []
-
     try:
-
-        with open(
-            ARQUIVO_HISTORICO,
-            "r",
-            encoding="utf-8"
-        ) as arquivo:
-
-            historico = json.load(
-                arquivo
-            )
-
-        if not isinstance(
-            historico,
-            list
-        ):
-            return []
-
+        conn = obter_conexao()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT role, content FROM historico_chat ORDER BY id ASC;")
+        rows = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        historico = [{"role": row[0], "content": row[1]} for row in rows]
         return historico
-
-    except Exception:
+    except Exception as e:
+        print(f"Erro ao carregar histórico do banco: {e}")
         return []
 
 
 def salvar_historico(historico):
-
-    with open(
-        ARQUIVO_HISTORICO,
-        "w",
-        encoding="utf-8"
-    ) as arquivo:
-
-        json.dump(
-            historico,
-            arquivo,
-            ensure_ascii=False,
-            indent=4
-        )
+    try:
+        conn = obter_conexao()
+        cursor = conn.cursor()
+        
+        # Limpa e reinsere para manter sincronizado com o limite atual
+        cursor.execute("DELETE FROM historico_chat;")
+        
+        for msg in historico:
+            cursor.execute(
+                "INSERT INTO historico_chat (role, content) VALUES (%s, %s);",
+                (msg.get("role"), msg.get("content"))
+            )
+            
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        print(f"Erro ao salvar histórico no banco: {e}")
 
 
 def limitar_historico(historico):
-
-    if not isinstance(
-        historico,
-        list
-    ):
+    if not isinstance(historico, list):
         return []
-
-    limite = max(
-        1,
-        int(LIMITE_HISTORICO)
-    )
-
+    limite = max(1, int(LIMITE_HISTORICO))
     return historico[-limite:]
