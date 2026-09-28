@@ -3,10 +3,10 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Configuração do Host e Porta exigidos pelo Render
 HOST = "0.0.0.0"
-PORT = int(os.environ.get("PORT", 10000))
+PORT = int(os.environ.get("PORT", 8080))
 
 # Definição do subdomínio da API dedicado
-OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://sol.guigamusic.com.br/v1")
+OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://sol.guigamusic.com.br")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
 class SolHandler(BaseHTTPRequestHandler):
